@@ -157,6 +157,10 @@ scene("game", () => {
   ]);
 
   function updateBackground() {
+    if (!scrolling) {
+      bg1.pos.x = 800;
+      bg2.pos.x = 800;
+    }
     if (!scrolling) return;
 
     BG_SPEED += bg_accel;
@@ -172,12 +176,14 @@ scene("game", () => {
     bgd.pos.x += BG_SPEED;
 
     // loop seamlessly
+    
     if (bg1.pos.x + bg1.width > bg1.width * 2) {
       bg1.pos.x = bg2.pos.x - bg2.width;
     }
     if (bg2.pos.x + bg2.width > bg2.width * 2) {
       bg2.pos.x = bg1.pos.x - bg1.width;
     }
+    
 
     if (bga.pos.x > BGA_WIDTH) {
       bga.pos.x = bga.pos.x - BGA_WIDTH;
