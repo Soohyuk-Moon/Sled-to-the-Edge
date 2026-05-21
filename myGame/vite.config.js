@@ -24,9 +24,14 @@ export default defineConfig({
         sourcemap: true,
         rollupOptions: {
             output: {
-                manualChunks: {
-                    kaplay: ["kaplay"],
-                },
+                 advancedChunks: {
+          groups: [
+            {
+              name: 'vendor',
+              test: /[\\/]node_modules[\\/]kaplay[\\/]/, // 분리할 라이브러리 명칭 기재
+            }
+          ]
+        }
             },
         },
     },
