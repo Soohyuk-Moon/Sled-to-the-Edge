@@ -18,11 +18,99 @@ const SCREEN_CENTER_X = width() / 2;
 const CLIFF_X = width() + 4850;
 
 let BG_SPEED = 4;
+let bg_accel = 0.075;
 const TRANSITION_X = width() + 5000;
 
 const ICE_FRICTION = 0.965;
 const PULL_ACCEL = 0.3;
-const MAX_SPEED = 8;
+let MAX_SPEED = 8;
+let bg_max_speed = 20;
+
+// ----------------------
+// DEBUG SLIDERS
+// ----------------------
+
+function createSlider(labelText, min, max, step, initialValue, onChange) {
+  // Container
+  const container = document.createElement("div");
+
+  container.style.position = "absolute";
+  container.style.right = "20px";
+  container.style.zIndex = "1000";
+  container.style.color = "white";
+  container.style.fontFamily = "Arial";
+  container.style.background = "rgba(0,0,0,0.5)";
+  container.style.padding = "10px";
+  container.style.borderRadius = "8px";
+  container.style.width = "220px";
+  container.style.backdropFilter = "blur(4px)";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "6px";
+
+  // Label
+  const label = document.createElement("div");
+  label.innerText = labelText;
+
+  // Value text
+  const valueText = document.createElement("div");
+  valueText.innerText = initialValue;
+
+  label.style.fontSize = "18px";
+  valueText.style.fontSize = "16px";
+
+  // Slider
+  const slider = document.createElement("input");
+  slider.type = "range";
+
+  slider.min = min;
+  slider.max = max;
+  slider.step = step;
+  slider.value = initialValue;
+
+  slider.style.width = "100%";
+
+  slider.oninput = () => {
+    valueText.innerText = slider.value;
+    onChange(parseFloat(slider.value));
+  };
+
+  container.appendChild(label);
+  container.appendChild(slider);
+  container.appendChild(valueText);
+
+  document.body.appendChild(container);
+
+  return container;
+}
+
+// Acceleration slider
+const accelSlider = createSlider(
+  "Acceleration",
+  0.01,
+  1.0,
+  0.01,
+  bg_accel,
+  (value) => {
+    bg_accel = value;
+  }
+);
+
+accelSlider.style.top = "20px";
+
+// Max speed slider
+const speedSlider = createSlider(
+  "Max Speed",
+  1,
+  50,
+  0.1,
+  bg_max_speed,
+  (value) => {
+    bg_max_speed = value;
+  }
+);
+
+speedSlider.style.top = "140px";
 
 // ----------------------
 // GAME STATE
@@ -47,10 +135,14 @@ scene("game", () => {
   const bg = add([sprite("skybg"), pos(0, 0), scale(5)]);
 
   const bga = add([sprite("ice"), pos(0, 0), scale(5)]);
-  const bgb = add([sprite("ice"), pos(bga.width * -5, 0), scale(5)]);
+  const BGA_WIDTH = 1450;
+  const bgb = add([sprite("ice"), pos(-BGA_WIDTH, 0), scale(5)]);
+  const BGB_WIDTH = 1450;
 
   const bgc = add([sprite("float"), pos(0, 0), scale(5)]);
-  const bgd = add([sprite("float"), pos(bgc.width * -5, 0), scale(5)]);
+  const BGC_WIDTH = 1450;
+  const bgd = add([sprite("float"), pos(-BGC_WIDTH, 0), scale(5)]);
+  const BGD_WIDTH = 1450;
 
   const bg1 = add([
     sprite("ice_bg", { width: 1600 }),
@@ -67,11 +159,11 @@ scene("game", () => {
   function updateBackground() {
     if (!scrolling) return;
 
-    BG_SPEED += 0.05;
-    BG_SPEED = Math.min(BG_SPEED, 30);
+    BG_SPEED += bg_accel;
+    BG_SPEED = Math.min(BG_SPEED, bg_max_speed);
 
-    bg1.pos.x += BG_SPEED * 2;
-    bg2.pos.x += BG_SPEED * 2;
+    bg1.pos.x += BG_SPEED * 1.5;
+    bg2.pos.x += BG_SPEED * 1.5;
 
     bga.pos.x += BG_SPEED * 0.5;
     bgb.pos.x += BG_SPEED * 0.5;
@@ -87,18 +179,18 @@ scene("game", () => {
       bg2.pos.x = bg1.pos.x - bg1.width;
     }
 
-    if (bga.pos.x + bga.width * 5 > bga.width * 5 * 2) {
-      bga.pos.x = bga.pos.x - bga.width * 5;
+    if (bga.pos.x > BGA_WIDTH) {
+      bga.pos.x = bga.pos.x - BGA_WIDTH;
     }
-    if (bgb.pos.x + bgb.width * 5 > bgb.width * 5) {
-      bgb.pos.x = bgb.pos.x - bgb.width * 5;
+    if (bgb.pos.x + BGB_WIDTH > BGB_WIDTH) {
+      bgb.pos.x = bgb.pos.x - BGB_WIDTH;
     }
 
-    if (bgc.pos.x + bgc.width * 5 > bgc.width * 5 * 2) {
-      bgc.pos.x = bgc.pos.x - bgc.width * 5;
+    if (bgc.pos.x > BGC_WIDTH) {
+      bgc.pos.x = bgc.pos.x - BGC_WIDTH;
     }
-    if (bgd.pos.x + bgd.width * 5 > bgd.width * 5) {
-      bgd.pos.x = bgd.pos.x - bgd.width * 5;
+    if (bgd.pos.x + BGD_WIDTH > BGD_WIDTH) {
+      bgd.pos.x = bgd.pos.x - BGD_WIDTH;
     }
   }
 
@@ -106,6 +198,24 @@ scene("game", () => {
   // CLIFF
   // ----------------------
   const cliff = add([rect(20, height()), pos(CLIFF_X, 0), color(255, 0, 0)]);
+
+  // ----------------------
+  // DISTANCE METERS
+  // ----------------------
+
+  const distanceTexts = [];
+
+  for (let i = 0; i < NUM_PLAYERS; i++) {
+    const meter = add([
+      text(""),
+      pos(20, 20 + i * 40),
+      fixed(),
+      color(255, 255, 255),
+      scale(1.2),
+    ]);
+
+    distanceTexts.push(meter);
+  }
 
   // ----------------------
   // PLAYERS (CENTERED)
@@ -126,6 +236,7 @@ scene("game", () => {
         released: false,
         finished: false,
         distanceToCliff: null,
+        penguin_removed: false,
       },
     ]);
 
@@ -185,22 +296,45 @@ scene("game", () => {
         const worldPos = penguin.worldPos();
 
         // Detach from sled
-        sled.remove(penguin);
-        add(penguin);
+        if (!player.sled.penguin_removed) {
+          sled.remove(penguin);
+          add(penguin);
 
-        // Keep it visually in same place
-        penguin.pos = worldPos;
+          // Keep it visually in same place
+          penguin.pos = worldPos;
 
-        penguin.scaleBy(0.9);
+          penguin.scaleBy(0.9);
 
-        // Give it independent movement
-        penguin.velocity = player.sled.velocity;
-        // destroy(player.penguin);
-        penguin.falling = false;
-        penguin.vy = 0;
+          // Give it independent movement
+          penguin.velocity = player.sled.velocity;
+          // destroy(player.penguin);
+          penguin.falling = false;
+          penguin.vy = 0;
+
+          player.sled.penguin_removed = true;
+        }
+
+        // if (player.sled.penguin_removed) {
+        //   // Keep it visually in same place
+        //   penguin.pos = worldPos;
+
+        //   penguin.scaleBy(0.9);
+
+        //   // Give it independent movement
+        //   penguin.velocity = player.sled.velocity;
+        //   // destroy(player.penguin);
+        //   penguin.falling = false;
+        //   penguin.vy = 0;
+        // }
       }
     });
   });
+
+  function updatePhysics() {}
+
+  function updatePenguins() {}
+
+  function updateDistanceUI() {}
 
   // ----------------------
   // UPDATE LOOP
@@ -231,7 +365,7 @@ scene("game", () => {
           penguin.scaleTo(0.27);
         } else {
           // falling motion
-          penguin.vy += 0.5; // gravity
+          penguin.vy += 2; // gravity
           penguin.pos.y += penguin.vy;
           penguin.pos.x -= 4;
           penguin.scaleTo(0.27);
@@ -285,20 +419,18 @@ scene("game", () => {
           scale(2),
         ]);
         if (!sled.released) {
-          sled.velocity += PULL_ACCEL;
+          sled.velocity += 2;
           sled.pos.x -= 8;
           sled.pos.y += sled.velocity;
           sled.angle -= 2;
-        } else {
-          //   sled.velocity *= ICE_FRICTION;
-          sled.velocity = 2;
         }
 
         // stop detection
         if (sled.velocity < 40) {
           allStopped = false;
         }
-        if (sled.released && penguin.vy > 40) {
+        if (sled.released && penguin.vy > 40 && !allStopped) {
+          destroy(penguin);
           allStopped = true;
         }
 
@@ -308,6 +440,28 @@ scene("game", () => {
           sled.distanceToCliff = -1;
         }
       }
+
+      // ----------------------
+      // DISTANCE UI
+      // ----------------------
+
+      let distance;
+
+      if (scrolling) {
+        distance = Math.max(0, Math.floor(CLIFF_X - (sled.fakeX || 0)));
+      } else {
+        distance = Math.max(0, Math.floor(sled.pos.x - CLIFF_X));
+      }
+
+      const newText = `P${sled.playerNumber}: ${distance}`;
+
+      if (distanceTexts[sled.playerNumber - 1].text !== newText) {
+        distanceTexts[sled.playerNumber - 1].text = newText;
+      }
+
+      // distanceTexts[
+      //   sled.playerNumber - 1
+      // ].text = `P${sled.playerNumber}: ${distance}m`;
     });
 
     // ----------------------
@@ -321,15 +475,9 @@ scene("game", () => {
         }
       });
 
-      let wait = 3;
-      loop(1, () => {
-        wait--;
-        if (wait < 0) {
-          return;
-        }
+      wait(3, () => {
+        endGame();
       });
-
-      endGame();
     }
   });
 });
