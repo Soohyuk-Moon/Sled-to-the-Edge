@@ -132,7 +132,7 @@ scene("game", () => {
   // ----------------------
   // BACKGROUND LOOP
   // ----------------------
-  const bg = add([sprite("skybg"), pos(0, 0), scale(5)]);
+  const bg = add([sprite("skybg"), pos(0, 0), scale(5.2)]);
 
   const bga = add([sprite("ice"), pos(0, 0), scale(5)]);
   const BGA_WIDTH = 1450;
