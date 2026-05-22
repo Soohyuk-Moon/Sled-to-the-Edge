@@ -147,13 +147,13 @@ scene("game", () => {
   const bg1 = add([
     sprite("ice_bg", { width: 1600 }),
     scale(vec2(1, 1)),
-    pos(0, 0),
+    pos(0, -10),
   ]);
 
   const bg2 = add([
     sprite("ice_bg", { width: 1600 }),
     scale(vec2(1, 1)),
-    pos(-1600, 0),
+    pos(-1600, -10),
   ]);
 
   function updateBackground() {
